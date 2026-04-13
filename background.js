@@ -26,6 +26,18 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   });
 });
 
+chrome.notifications.onClicked.addListener((notificationId) => {
+  chrome.notifications.clear(notificationId);
+  chrome.tabs.query({ url: 'https://oasis.ssu.ac.kr/*' }, (tabs) => {
+    if (tabs.length > 0) {
+      chrome.tabs.update(tabs[0].id, { active: true });
+      chrome.windows.update(tabs[0].windowId, { focused: true });
+    } else {
+      chrome.tabs.create({ url: 'https://oasis.ssu.ac.kr/library-services/smuf/reading-rooms' });
+    }
+  });
+});
+
 function showNotification(id, title, message) {
   chrome.notifications.create(id, {
     type: 'basic',
