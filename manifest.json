@@ -8,7 +8,6 @@
         "https://oasis.ssu.ac.kr/*"
     ],
     "action": {
-        "default_popup": "popup.html",
         "default_icon": {
             "48": "icons/icon48.png"
         }
