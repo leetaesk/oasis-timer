@@ -1,0 +1,30 @@
+{
+    "manifest_version": 3,
+    "name": "Oasis Timer",
+    "version": "2.0",
+    "description": "도서관 자리 예약 남은 시간 표시",
+    "permissions": ["storage", "alarms", "notifications"],
+    "host_permissions": [
+        "https://oasis.ssu.ac.kr/*"
+    ],
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "48": "icons/icon48.png"
+        }
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "icons": {
+        "48": "icons/icon48.png"
+    },
+    "content_scripts": [
+        {
+            "matches": ["https://oasis.ssu.ac.kr/library-services/smuf/reading-rooms*"],
+            "js": ["content.js"],
+            "css": ["content.css"],
+            "run_at": "document_idle"
+        }
+    ]
+}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oasis Timer</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+    <div class="header">
+      <span class="header-icon">📚</span>
+      <h1>도서관 자리 예약 타이머</h1>
+    </div>
+
+    <div class="timer-card" id="timerCard">
+      <div class="status-badge" id="statusBadge">대기 중</div>
+
+      <div class="time-display" id="display">04:00:00</div>
+      <div class="time-label">남은 시간</div>
+
+      <div class="progress-container">
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-labels">
+          <span id="elapsedLabel">경과: 00:00:00</span>
+          <span>기준: 4시간</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="custom-start">
+      <label for="startHour">시작 시간 직접 설정</label>
+      <div class="time-inputs">
+        <input type="number" id="startHour" min="0" max="23" placeholder="시" />
+        <span>:</span>
+        <input type="number" id="startMin" min="0" max="59" placeholder="분" />
+        <button id="applyTimeBtn">적용</button>
+      </div>
+    </div>
+
+    <div id="controls">
+      <button id="startBtn">▶ 지금 시작</button>
+      <button id="resetBtn">↺ 초기화</button>
+    </div>
+
+    <div class="notification-info">
+      <span>🔔 종료 30분 전 · 10분 전 · 종료 시 알림</span>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

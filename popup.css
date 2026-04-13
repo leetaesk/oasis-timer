@@ -1,0 +1,266 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 300px;
+  padding: 16px;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f0f4f8;
+  color: #2d3748;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-icon {
+  font-size: 18px;
+}
+
+h1 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+/* Timer Card */
+.timer-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: #e2e8f0;
+  color: #718096;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.running {
+  background: #c6f6d5;
+  color: #276749;
+}
+
+.status-badge.warning {
+  background: #fefcbf;
+  color: #975a16;
+}
+
+.status-badge.danger {
+  background: #fed7d7;
+  color: #9b2335;
+  animation: pulse 1s infinite;
+}
+
+.status-badge.expired {
+  background: #fed7d7;
+  color: #9b2335;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.time-display {
+  font-size: 48px;
+  font-weight: 700;
+  color: #2d3748;
+  letter-spacing: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-display.warning {
+  color: #d97706;
+}
+
+.time-display.danger {
+  color: #e53e3e;
+}
+
+.time-display.expired {
+  color: #a0aec0;
+}
+
+.time-label {
+  font-size: 12px;
+  color: #a0aec0;
+  margin-top: -8px;
+}
+
+/* Progress Bar */
+.progress-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #48bb78, #38a169);
+  border-radius: 4px;
+  transition: width 1s linear, background 0.5s;
+}
+
+.progress-fill.warning {
+  background: linear-gradient(90deg, #f6ad55, #ed8936);
+}
+
+.progress-fill.danger {
+  background: linear-gradient(90deg, #fc8181, #e53e3e);
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #a0aec0;
+}
+
+/* Custom start time */
+.custom-start {
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.custom-start label {
+  font-size: 11px;
+  color: #718096;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.time-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.time-inputs input {
+  width: 52px;
+  padding: 5px 8px;
+  font-size: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  text-align: center;
+  outline: none;
+}
+
+.time-inputs input:focus {
+  border-color: #68d391;
+}
+
+.time-inputs span {
+  font-weight: bold;
+  color: #718096;
+}
+
+#applyTimeBtn {
+  padding: 5px 12px;
+  font-size: 12px;
+  background: #68d391;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+#applyTimeBtn:hover {
+  background: #48bb78;
+}
+
+/* Controls */
+#controls {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  flex: 1;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+#startBtn {
+  background: #48bb78;
+  color: white;
+}
+
+#startBtn:hover {
+  background: #38a169;
+}
+
+#startBtn.active {
+  background: #f56565;
+}
+
+#startBtn.active:hover {
+  background: #e53e3e;
+}
+
+#startBtn:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+#resetBtn {
+  background: #e2e8f0;
+  color: #4a5568;
+  flex: 0 0 auto;
+  padding: 10px 14px;
+}
+
+#resetBtn:hover {
+  background: #cbd5e0;
+}
+
+/* Notification info */
+.notification-info {
+  text-align: center;
+  font-size: 11px;
+  color: #a0aec0;
+  padding-bottom: 2px;
+}

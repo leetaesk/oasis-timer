@@ -1,0 +1,241 @@
+/* =============================================
+   Oasis Timer — 인라인 좌석 정보 스타일
+   ============================================= */
+
+/* ---- 열람실 목록 페이지 레이아웃 ---- */
+
+ik-seat-rooms .ikc-seat-rooms {
+    justify-content: center !important;
+}
+
+ik-seat-rooms .ikc-seat-rooms > ik-seat-room-status {
+    width: 25% !important;
+    min-width: 180px !important;
+}
+
+/* ---- 좌석 배치도 전체 비례 스케일 ----
+   룸별 맵(.ikc-seat-map53 등)에만 적용.
+   col(40px), margin, padding 등 모든 하드코딩 값이
+   1.55배로 자동 스케일됩니다.
+   (제네릭 래퍼 .ikc-seat-map은 제외)
+------------------------------------------------ */
+
+/* ---- 좌석 컬럼: 버튼 너비에 맞춰 통일 ---- */
+.col,
+.col.reverse {
+    width: 58px !important;
+    min-width: 58px !important;
+}
+
+/* ---- room 59 전용: ik-seat 너비 축소 (버튼 106px → 58px) ---- */
+.ikc-seat-map59 ik-seat {
+    width: 88px !important;
+}
+
+/* ---- room 60 전용: 맵 높이 600px 증가 ---- */
+.ikc-seat-map60 {
+    height: 1060px !important;
+}
+
+/* ---- room 57 전용: 원래 버튼 크기 및 col 너비 복원 ---- */
+.ikc-seat-map57 button.ikc-button-seat {
+    width: 44px !important;
+    min-width: 44px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    padding: 1px 2px !important;
+}
+
+.ikc-seat-map57 .col,
+.ikc-seat-map57 .col.reverse {
+    width: 50px !important;
+    min-width: 50px !important;
+}
+
+/* ---- room 53 전용: col 간격 30px → 5px 축소 ---- */
+.ikc-seat-map53 .col + .col,
+.ikc-seat-map53 .col + .col.reverse,
+.ikc-seat-map53 .col.reverse + .col {
+    margin-left: 5px !important;
+}
+
+.ikc-seat-map53 .row ik-seat + ik-seat {
+    margin-left: 5px !important;
+}
+
+.ikc-seat-map53 .row1 ik-seat {
+    margin: 0px 5px !important;
+}
+
+/* ---- 모든 좌석 버튼: 크기 통일 (zoom이 1.55배 스케일) ---- */
+button.ikc-button-seat {
+    width: 56px !important;
+    min-width: 56px !important;
+    height: 54px !important;
+    min-height: 54px !important;
+    padding: 4px 2px !important;
+}
+
+/* ---- 사용 중인 좌석 버튼: 알람 버튼 절대위치 기준 ---- */
+button.ikc-button-seat.oasis-occupied {
+    position: relative !important;
+}
+
+/* 좌석 코드 영역: 세로 정렬 */
+button.ikc-button-seat.oasis-occupied .ikc-seat-code {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1px !important;
+    width: 100% !important;
+    height: auto !important;
+    line-height: 1 !important;
+    padding: 2px 0 !important;
+}
+
+/* 좌석 번호 */
+.oasis-code-num {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.3px !important;
+    line-height: 1.3 !important;
+}
+
+/* 잔여 시간 */
+.oasis-inline-remaining {
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+}
+
+/* 종료 시각 */
+.oasis-inline-endtime {
+    font-size: 8px !important;
+    font-weight: 500 !important;
+    opacity: 0.9 !important;
+    line-height: 1.3 !important;
+    white-space: nowrap !important;
+}
+
+/* ---- 상태별 색상 ---- */
+
+/* normal: 파랑 계열 */
+button.oasis-state-normal .oasis-inline-remaining {
+    color: #1565c0 !important;
+}
+button.oasis-state-normal .oasis-inline-endtime {
+    color: #546e7a !important;
+}
+
+/* warning: 주황 계열 + 테두리 */
+button.oasis-state-warning .oasis-inline-remaining {
+    color: #e65100 !important;
+}
+button.oasis-state-warning .oasis-inline-endtime {
+    color: #bf360c !important;
+}
+button.oasis-state-warning {
+    border: 2px solid #ff9800 !important;
+}
+
+/* danger: 빨강 계열 + 점멸 테두리 */
+button.oasis-state-danger .oasis-inline-remaining {
+    color: #b71c1c !important;
+}
+button.oasis-state-danger .oasis-inline-endtime {
+    color: #b71c1c !important;
+}
+button.oasis-state-danger {
+    border: 2px solid #f44336 !important;
+    animation: oasis-blink 0.9s step-start infinite !important;
+}
+
+/* expired: 회색 + 흐릿 */
+button.oasis-state-expired .oasis-inline-remaining {
+    color: #757575 !important;
+}
+button.oasis-state-expired .oasis-inline-endtime {
+    color: #9e9e9e !important;
+}
+button.oasis-state-expired {
+    opacity: 0.55 !important;
+    border: 2px dashed #9e9e9e !important;
+}
+
+@keyframes oasis-blink {
+    0%,
+    100% {
+        border-color: #f44336;
+    }
+    50% {
+        border-color: transparent;
+    }
+}
+
+/* ---- 알람 버튼 ---- */
+
+.oasis-alarm-btn {
+    position: absolute !important;
+    top: 2px !important;
+    right: 2px !important;
+    width: 14px !important;
+    height: 14px !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 3px !important;
+    color: rgba(0, 0, 0, 0.25) !important;
+    line-height: 1 !important;
+    transition:
+        color 0.15s,
+        background 0.15s !important;
+}
+
+.oasis-alarm-btn:hover {
+    color: #1565c0 !important;
+    background: rgba(21, 101, 192, 0.12) !important;
+}
+
+.oasis-alarm-btn.oasis-alarm-armed {
+    color: #f57c00 !important;
+}
+
+.oasis-alarm-btn.oasis-alarm-armed:hover {
+    color: #e65100 !important;
+    background: rgba(245, 124, 0, 0.12) !important;
+}
+
+/* ---- 토스트 ---- */
+
+#oasis-toast {
+    position: fixed !important;
+    bottom: 28px !important;
+    left: 50% !important;
+    transform: translateX(-50%) translateY(12px) !important;
+    background: #323232 !important;
+    color: #fff !important;
+    padding: 10px 18px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    font-family: "Noto Sans KR", sans-serif !important;
+    z-index: 9999999 !important;
+    opacity: 0 !important;
+    transition:
+        opacity 0.25s ease,
+        transform 0.25s ease !important;
+    pointer-events: none !important;
+    white-space: nowrap !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+#oasis-toast.oasis-toast-visible {
+    opacity: 1 !important;
+    transform: translateX(-50%) translateY(0) !important;
+}
