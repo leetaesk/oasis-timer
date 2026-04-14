@@ -26,19 +26,18 @@ function getPyxisToken() {
 }
 
 async function apiFetch(path, token) {
-  try {
-    const res = await fetch(`https://oasis.ssu.ac.kr${path}`, {
-      credentials: 'include',
-      cache: 'no-store',
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Language': 'ko',
-        'Pyxis-Auth-Token': token,
-      },
-    });
-    const data = await res.json();
-    return data.success ? data.data : null;
-  } catch { return null; }
+  const res = await fetch(`https://oasis.ssu.ac.kr${path}`, {
+    credentials: 'include',
+    cache: 'no-store',
+    headers: {
+      'Accept': 'application/json',
+      'Accept-Language': 'ko',
+      'Pyxis-Auth-Token': token,
+    },
+  });
+  const data = await res.json();
+  if (!data.success) throw new Error(data.code || data.message || JSON.stringify(data));
+  return data.data ?? { totalCount: 0, list: [] };
 }
 
 // ── 포맷 ──────────────────────────────────────────────
@@ -65,10 +64,11 @@ function formatRemaining(minutes) {
 
 async function renderMySeat(token) {
   const el = document.getElementById('my-seat-content');
-  const data = await apiFetch('/pyxis-api/1/api/seat-charges', token);
-
-  if (!data) {
-    el.innerHTML = '<div class="error">불러오기 실패</div>';
+  let data;
+  try {
+    data = await apiFetch('/pyxis-api/1/api/seat-charges', token);
+  } catch (e) {
+    el.innerHTML = `<div class="error">불러오기 실패: ${e.message}</div>`;
     return;
   }
   if (data.totalCount === 0) {

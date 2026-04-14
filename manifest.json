@@ -4,9 +4,7 @@
     "version": "2.0",
     "description": "도서관 자리 예약 남은 시간 표시",
     "permissions": ["storage", "alarms", "notifications", "tabs", "cookies"],
-    "host_permissions": [
-        "https://oasis.ssu.ac.kr/*"
-    ],
+    "host_permissions": ["https://oasis.ssu.ac.kr/*"],
     "action": {
         "default_icon": {
             "48": "icons/icon48.png"
@@ -17,11 +15,15 @@
         "service_worker": "background.js"
     },
     "icons": {
-        "48": "icons/icon48.png"
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
     },
     "content_scripts": [
         {
-            "matches": ["https://oasis.ssu.ac.kr/library-services/smuf/reading-rooms*"],
+            "matches": [
+                "https://oasis.ssu.ac.kr/library-services/smuf/reading-rooms*"
+            ],
             "js": ["content.js"],
             "css": ["content.css"],
             "run_at": "document_idle"
