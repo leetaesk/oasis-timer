@@ -186,7 +186,8 @@ button.oasis-state-expired {
     border: none !important;
     background: transparent !important;
     cursor: pointer !important;
-    z-index: 10 !important;
+    z-index: 9999 !important;
+    pointer-events: auto !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;

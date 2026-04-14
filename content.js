@@ -319,6 +319,7 @@ function injectInline(progressBar) {
     }
     alarmDiv.addEventListener("click", (e) => {
         e.stopPropagation();
+        e.preventDefault();
         toggleAlarm(originalText, endTimestamp, alarmDiv, getRoomId());
     });
     btn.appendChild(alarmDiv);
