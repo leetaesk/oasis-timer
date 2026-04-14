@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Oasis Timer",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "중앙도서관 좌석 타이머",
     "permissions": ["storage", "alarms", "notifications", "tabs", "cookies"],
     "host_permissions": ["https://oasis.ssu.ac.kr/*"],

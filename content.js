@@ -133,7 +133,7 @@ async function pollSeats() {
         } else {
             // 연장 감지: 새 예상 종료시각이 기존보다 5분 이상 늦을 때 (4번 케이스)
             const newEndTimestamp = Date.now() + seat.remainingTime * 60 * 1000;
-            if (newEndTimestamp > alarmInfo.endTimestamp + 5 * 60 * 1000) {
+            if (newEndTimestamp > alarmInfo.endTimestamp + 60 * 60 * 1000) {
                 chrome.runtime.sendMessage({
                     action: "clearSeatAlarm",
                     alarmName: alarmInfo.alarmName,
