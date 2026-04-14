@@ -386,9 +386,21 @@ chrome.runtime.onMessage.addListener((msg) => {
   }
 });
 
-// 초기 실행 (Angular 렌더링 대기)
-setTimeout(scanAll, 500);
-setTimeout(scanAll, 1500);
-setTimeout(setupMySeatWarning, 2000);
+// 스토리지에서 알람 상태 복원 후 초기 실행
+chrome.storage.local.get(null, (items) => {
+    for (const [key, val] of Object.entries(items)) {
+        if (key.startsWith('oasis-seat-') && val?.seatCode) {
+            seatAlarmState.set(val.seatCode, {
+                alarmName: key,
+                endTimestamp: val.endTimestamp,
+                roomId: val.roomId,
+                roomName: val.roomName,
+            });
+        }
+    }
+    setTimeout(scanAll, 500);
+    setTimeout(scanAll, 1500);
+});
 
+setTimeout(setupMySeatWarning, 2000);
 startPolling();
