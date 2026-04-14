@@ -9,6 +9,18 @@ chrome.runtime.onMessage.addListener((msg) => {
   } else if (msg.action === 'clearSeatAlarm') {
     chrome.alarms.clear(msg.alarmName);
     chrome.storage.local.remove(msg.alarmName);
+  } else if (msg.action === 'seatCancelledNotify') {
+    showNotification(
+      `oasis-cancelled-${msg.seatCode}`,
+      '좌석 취소 알림',
+      `알람을 설정하신 ${msg.seatCode} 자리가 취소되었어요.`
+    );
+  } else if (msg.action === 'seatExtendedNotify') {
+    showNotification(
+      `oasis-extended-${msg.seatCode}`,
+      '좌석 연장 알림',
+      `알람을 설정하신 ${msg.seatCode} 자리가 연장되었어요. 알람을 취소할게요.`
+    );
   }
 });
 

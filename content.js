@@ -9,8 +9,108 @@ const TOTAL_SECONDS = 4 * 60 * 60; // 4시간
 
 // 자리별 타이머 상태: key = mat-progress-bar element
 const seatTimers = new Map();
-// 알람 설정 상태: key = seatCodeText
+// 알람 설정 상태: key = seatCodeText, value = { alarmName, endTimestamp }
 const seatAlarmState = new Map();
+
+// 폴링
+const POLL_INTERVAL_MS = 60 * 1000;
+let pollIntervalId = null;
+
+function getRoomId() {
+  return window.location.pathname.match(/reading-rooms\/(\d+)/)?.[1];
+}
+
+function getPyxisToken() {
+  const match = document.cookie.split(';').find(c => c.trim().startsWith('LOPE_PYXIS3_SSU='));
+  if (!match) return null;
+  try {
+    const raw = match.trim().slice('LOPE_PYXIS3_SSU='.length);
+    const obj = JSON.parse(decodeURIComponent(raw));
+    return obj.accessToken || null;
+  } catch (_) {
+    return null;
+  }
+}
+
+async function pollSeats() {
+  if (seatAlarmState.size === 0) return;
+
+  const roomId = getRoomId();
+  if (!roomId) return;
+
+  const token = getPyxisToken();
+  if (!token) return;
+
+  let seats;
+  try {
+    const res = await fetch(`/pyxis-api/1/api/rooms/${roomId}/seats`, {
+      credentials: 'include',
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Language': 'ko',
+        'Pyxis-Auth-Token': token
+      }
+    });
+    const data = await res.json();
+    if (!data.success) return;
+    seats = data.data?.list || [];
+  } catch (_) {
+    return;
+  }
+
+  if (!seats.length) return;
+
+  for (const [seatCode, alarmInfo] of [...seatAlarmState.entries()]) {
+    const seat = seats.find(s => s.code === seatCode);
+
+    if (!seat || !seat.isOccupied) {
+      // 조기 취소 (1, 2, 3번 케이스)
+      chrome.runtime.sendMessage({ action: 'clearSeatAlarm', alarmName: alarmInfo.alarmName });
+      chrome.runtime.sendMessage({ action: 'seatCancelledNotify', seatCode });
+      seatAlarmState.delete(seatCode);
+      resetAlarmButton(seatCode);
+      showToast(`알람을 설정하신 ${seatCode} 자리가 취소되었어요.`);
+    } else {
+      // 연장 감지: 새 예상 종료시각이 기존보다 5분 이상 늦을 때 (4번 케이스)
+      const newEndTimestamp = Date.now() + seat.remainingTime * 60 * 1000;
+      if (newEndTimestamp > alarmInfo.endTimestamp + 5 * 60 * 1000) {
+        chrome.runtime.sendMessage({ action: 'clearSeatAlarm', alarmName: alarmInfo.alarmName });
+        chrome.runtime.sendMessage({ action: 'seatExtendedNotify', seatCode });
+        seatAlarmState.delete(seatCode);
+        resetAlarmButton(seatCode);
+        showToast(`알람을 설정하신 ${seatCode} 자리가 연장되었어요. 알람을 취소할게요.`);
+      }
+    }
+  }
+}
+
+function startPolling() {
+  if (pollIntervalId !== null) return;
+  pollIntervalId = setInterval(pollSeats, POLL_INTERVAL_MS);
+}
+
+function stopPolling() {
+  if (pollIntervalId === null) return;
+  clearInterval(pollIntervalId);
+  pollIntervalId = null;
+}
+
+function findSeatState(seatCode) {
+  for (const [, state] of seatTimers.entries()) {
+    if (state.originalText === seatCode) return state;
+  }
+  return null;
+}
+
+function resetAlarmButton(seatCode) {
+  const state = findSeatState(seatCode);
+  if (!state) return;
+  const btn = state.btn.querySelector('.oasis-alarm-btn');
+  if (!btn) return;
+  btn.classList.remove('oasis-alarm-armed');
+  btn.title = '종료 시 알림 설정';
+}
 
 const BELL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="10" height="10" fill="currentColor">
   <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
@@ -80,7 +180,7 @@ function toggleAlarm(seatCodeText, endTimestamp, alarmDiv) {
   } else {
     // 알람 설정
     chrome.runtime.sendMessage({ action: 'setSeatAlarm', alarmName, seatCodeText, endTimestamp });
-    seatAlarmState.set(seatCodeText, alarmName);
+    seatAlarmState.set(seatCodeText, { alarmName, endTimestamp });
     alarmDiv.classList.add('oasis-alarm-armed');
     alarmDiv.title = '알림 취소';
     const endStr = formatEndTime(endTimestamp);
@@ -188,3 +288,5 @@ observer.observe(document.body, {
 // 초기 실행 (Angular 렌더링 대기)
 setTimeout(scanAll, 500);
 setTimeout(scanAll, 1500);
+
+startPolling();
