@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
     "name": "Oasis Timer",
-    "version": "2.0",
-    "description": "도서관 자리 예약 남은 시간 표시",
+    "version": "1.0.0",
+    "description": "중앙도서관 좌석 타이머",
     "permissions": ["storage", "alarms", "notifications", "tabs", "cookies"],
     "host_permissions": ["https://oasis.ssu.ac.kr/*"],
     "action": {
