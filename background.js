@@ -45,6 +45,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
                     chrome.tabs.sendMessage(tab.id, {
                         action: 'alarmCancelledFromPopup',
                         seatCode: msg.seatCode,
+                        roomId: msg.roomId,
                     })
                 );
             });

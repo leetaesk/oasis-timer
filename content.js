@@ -83,71 +83,77 @@ async function setupMySeatWarning() {
 async function pollSeats() {
     if (seatAlarmState.size === 0) return;
 
-    const roomId = getRoomId();
-    if (!roomId) return;
-
     const token = getPyxisToken();
     if (!token) return;
 
-    let seats;
-    try {
-        const res = await fetch(`/pyxis-api/1/api/rooms/${roomId}/seats`, {
-            credentials: "include",
-            cache: "no-store",
-            headers: {
-                Accept: "application/json",
-                "Accept-Language": "ko",
-                "Pyxis-Auth-Token": token,
-            },
-        });
-        const data = await res.json();
-        if (!data.success) return;
-        seats = data.data?.list || [];
-    } catch (_) {
-        return;
+    // roomId별로 알람 그룹화
+    const roomGroups = new Map(); // roomId -> [{ stateKey, seatCode, alarmInfo }]
+    for (const [stateKey, alarmInfo] of seatAlarmState.entries()) {
+        const roomId = alarmInfo.roomId;
+        if (!roomGroups.has(roomId)) roomGroups.set(roomId, []);
+        roomGroups.get(roomId).push({ stateKey, seatCode: alarmInfo.seatCode, alarmInfo });
     }
 
-    if (!seats.length) return;
-
-    for (const [seatCode, alarmInfo] of [...seatAlarmState.entries()]) {
-        const seat = seats.find((s) => s.code === seatCode);
-
-        const { roomName } = alarmInfo;
-
-        if (!seat || !seat.isOccupied) {
-            // 조기 취소 (1, 2, 3번 케이스)
-            chrome.runtime.sendMessage({
-                action: "clearSeatAlarm",
-                alarmName: alarmInfo.alarmName,
+    for (const [roomId, alarms] of roomGroups.entries()) {
+        let seats;
+        try {
+            const res = await fetch(`/pyxis-api/1/api/rooms/${roomId}/seats`, {
+                credentials: "include",
+                cache: "no-store",
+                headers: {
+                    Accept: "application/json",
+                    "Accept-Language": "ko",
+                    "Pyxis-Auth-Token": token,
+                },
             });
-            chrome.runtime.sendMessage({
-                action: "seatCancelledNotify",
-                seatCode,
-                roomName,
-            });
-            seatAlarmState.delete(seatCode);
-            resetAlarmButton(seatCode);
-            showToast(
-                `알람을 설정하신 '${roomName}' ${seatCode} 번 자리가 취소되었어요.`,
-            );
-        } else {
-            // 연장 감지: 새 예상 종료시각이 기존보다 5분 이상 늦을 때 (4번 케이스)
-            const newEndTimestamp = Date.now() + seat.remainingTime * 60 * 1000;
-            if (newEndTimestamp > alarmInfo.endTimestamp + 60 * 60 * 1000) {
+            const data = await res.json();
+            if (!data.success) continue;
+            seats = data.data?.list || [];
+        } catch (_) {
+            continue;
+        }
+
+        if (!seats.length) continue;
+
+        for (const { stateKey, seatCode, alarmInfo } of alarms) {
+            const seat = seats.find((s) => s.code === seatCode);
+            const { roomName } = alarmInfo;
+
+            if (!seat || !seat.isOccupied) {
+                // 조기 취소 (1, 2, 3번 케이스)
                 chrome.runtime.sendMessage({
                     action: "clearSeatAlarm",
                     alarmName: alarmInfo.alarmName,
                 });
                 chrome.runtime.sendMessage({
-                    action: "seatExtendedNotify",
+                    action: "seatCancelledNotify",
                     seatCode,
                     roomName,
                 });
-                seatAlarmState.delete(seatCode);
+                seatAlarmState.delete(stateKey);
                 resetAlarmButton(seatCode);
                 showToast(
-                    `알람을 설정하신 '${roomName}' ${seatCode} 번 자리가 연장되었어요. 알람을 취소할게요.`,
+                    `알람을 설정하신 '${roomName}' ${seatCode} 번 자리가 취소되었어요.`,
                 );
+            } else {
+                // 연장 감지: 새 예상 종료시각이 기존보다 1시간 이상 늦을 때 (4번 케이스)
+                const newEndTimestamp = Date.now() + seat.remainingTime * 60 * 1000;
+                if (newEndTimestamp > alarmInfo.endTimestamp + 60 * 60 * 1000) {
+                    chrome.runtime.sendMessage({
+                        action: "clearSeatAlarm",
+                        alarmName: alarmInfo.alarmName,
+                    });
+                    chrome.runtime.sendMessage({
+                        action: "seatExtendedNotify",
+                        seatCode,
+                        roomName,
+                    });
+                    seatAlarmState.delete(stateKey);
+                    resetAlarmButton(seatCode);
+                    showToast(
+                        `알람을 설정하신 '${roomName}' ${seatCode} 번 자리가 연장되었어요. 알람을 취소할게요.`,
+                    );
+                }
             }
         }
     }
@@ -241,13 +247,14 @@ function showToast(message) {
 // ── 알람 토글 ─────────────────────────────────────────
 
 function toggleAlarm(seatCodeText, endTimestamp, alarmDiv, roomId) {
-    const alarmName = `oasis-seat-${seatCodeText}`;
+    const stateKey = `${roomId}_${seatCodeText}`;
+    const alarmName = `oasis-seat-${roomId}-${seatCodeText}`;
     const roomName = getRoomName(roomId);
 
-    if (seatAlarmState.has(seatCodeText)) {
+    if (seatAlarmState.has(stateKey)) {
         // 알람 취소
         chrome.runtime.sendMessage({ action: "clearSeatAlarm", alarmName });
-        seatAlarmState.delete(seatCodeText);
+        seatAlarmState.delete(stateKey);
         alarmDiv.classList.remove("oasis-alarm-armed");
         alarmDiv.title = "종료 시 알림 설정";
         showToast(
@@ -263,11 +270,12 @@ function toggleAlarm(seatCodeText, endTimestamp, alarmDiv, roomId) {
             roomName,
             endTimestamp,
         });
-        seatAlarmState.set(seatCodeText, {
+        seatAlarmState.set(stateKey, {
             alarmName,
             endTimestamp,
             roomId,
             roomName,
+            seatCode: seatCodeText,
         });
         alarmDiv.classList.add("oasis-alarm-armed");
         alarmDiv.title = "알림 취소";
@@ -313,7 +321,8 @@ function injectInline(progressBar) {
     alarmDiv.title = "종료 시 알림 설정";
     alarmDiv.innerHTML = BELL_SVG;
     // 이미 알람이 설정된 좌석이면 armed 상태 복원
-    if (seatAlarmState.has(originalText)) {
+    const currentRoomId = getRoomId();
+    if (seatAlarmState.has(`${currentRoomId}_${originalText}`)) {
         alarmDiv.classList.add("oasis-alarm-armed");
         alarmDiv.title = "알림 취소";
     }
@@ -382,7 +391,8 @@ observer.observe(document.body, {
 // 팝업에서 알람 취소 시 버튼 UI 동기화
 chrome.runtime.onMessage.addListener((msg) => {
   if (msg.action === 'alarmCancelledFromPopup') {
-    seatAlarmState.delete(msg.seatCode);
+    const stateKey = `${msg.roomId}_${msg.seatCode}`;
+    seatAlarmState.delete(stateKey);
     resetAlarmButton(msg.seatCode);
   }
 });
@@ -390,12 +400,14 @@ chrome.runtime.onMessage.addListener((msg) => {
 // 스토리지에서 알람 상태 복원 후 초기 실행
 chrome.storage.local.get(null, (items) => {
     for (const [key, val] of Object.entries(items)) {
-        if (key.startsWith('oasis-seat-') && val?.seatCode) {
-            seatAlarmState.set(val.seatCode, {
+        if (key.startsWith('oasis-seat-') && val?.seatCode && val?.roomId) {
+            const stateKey = `${val.roomId}_${val.seatCode}`;
+            seatAlarmState.set(stateKey, {
                 alarmName: key,
                 endTimestamp: val.endTimestamp,
                 roomId: val.roomId,
                 roomName: val.roomName,
+                seatCode: val.seatCode,
             });
         }
     }

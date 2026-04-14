@@ -140,7 +140,7 @@ async function renderAlarms() {
         <div class="alarm-seat">${info.seatCode}번 자리</div>
         <div class="alarm-time">종료 ${formatEndTimeFromTs(info.endTimestamp)}</div>
       </div>
-      <button class="cancel-btn" data-alarm="${alarmName}" data-seat="${info.seatCode}">취소</button>
+      <button class="cancel-btn" data-alarm="${alarmName}" data-seat="${info.seatCode}" data-room="${info.roomId}">취소</button>
     </div>
   `,
         )
@@ -152,7 +152,7 @@ async function renderAlarms() {
         btn.addEventListener("click", async () => {
             btn.disabled = true;
             btn.textContent = "…";
-            await cancelAlarm(btn.dataset.alarm, btn.dataset.seat);
+            await cancelAlarm(btn.dataset.alarm, btn.dataset.seat, btn.dataset.room);
             await renderAlarms();
         });
     });
@@ -160,10 +160,10 @@ async function renderAlarms() {
 
 // ── 알람 취소 ─────────────────────────────────────────
 
-function cancelAlarm(alarmName, seatCode) {
+function cancelAlarm(alarmName, seatCode, roomId) {
     return new Promise((resolve) => {
         chrome.runtime.sendMessage(
-            { action: "cancelAlarmFromPopup", alarmName, seatCode },
+            { action: "cancelAlarmFromPopup", alarmName, seatCode, roomId },
             resolve,
         );
     });
