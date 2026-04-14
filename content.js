@@ -47,6 +47,39 @@ function getPyxisToken() {
     }
 }
 
+async function setupMySeatWarning() {
+  const token = getPyxisToken();
+  if (!token) return;
+
+  let charge = null;
+  try {
+    const res = await fetch('/pyxis-api/1/api/seat-charges', {
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json', 'Accept-Language': 'ko', 'Pyxis-Auth-Token': token },
+    });
+    const data = await res.json();
+    if (!data.success || data.data.totalCount === 0) return;
+    charge = data.data.list[0];
+  } catch (_) {
+    return;
+  }
+
+  // "2026-04-14 21:19:00" → timestamp
+  const endTimestamp = new Date(charge.endTime.replace(' ', 'T')).getTime();
+  const warningTimestamp = endTimestamp - 30 * 60 * 1000;
+
+  if (warningTimestamp <= Date.now()) return; // 이미 30분 이하 남음
+
+  chrome.runtime.sendMessage({
+    action: 'setMySeatWarning',
+    warningTimestamp,
+    endTimestamp,
+    seatCode: charge.seat.code,
+    roomName: charge.room.name,
+  });
+}
+
 async function pollSeats() {
     if (seatAlarmState.size === 0) return;
 
@@ -345,8 +378,17 @@ observer.observe(document.body, {
     attributeFilter: ["aria-valuenow"],
 });
 
+// 팝업에서 알람 취소 시 버튼 UI 동기화
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg.action === 'alarmCancelledFromPopup') {
+    seatAlarmState.delete(msg.seatCode);
+    resetAlarmButton(msg.seatCode);
+  }
+});
+
 // 초기 실행 (Angular 렌더링 대기)
 setTimeout(scanAll, 500);
 setTimeout(scanAll, 1500);
+setTimeout(setupMySeatWarning, 2000);
 
 startPolling();

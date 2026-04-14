@@ -2,7 +2,7 @@ chrome.runtime.onInstalled.addListener(() => {
     console.log("Oasis Timer installed");
 });
 
-chrome.runtime.onMessage.addListener((msg) => {
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.action === "setSeatAlarm") {
         chrome.alarms.create(msg.alarmName, { when: msg.endTimestamp });
         chrome.storage.local.set({
@@ -28,10 +28,48 @@ chrome.runtime.onMessage.addListener((msg) => {
             "🔔 좌석 연장 알림",
             `알람을 설정하신 ${msg.roomName} ${msg.seatCode} 번 자리가 연장되었어요. 알람을 취소할게요.`,
         );
+    } else if (msg.action === 'setMySeatWarning') {
+        chrome.alarms.create('oasis-my-seat-warning', { when: msg.warningTimestamp });
+        chrome.storage.local.set({
+            'oasis-my-seat-warning': {
+                seatCode: msg.seatCode,
+                roomName: msg.roomName,
+                endTimestamp: msg.endTimestamp,
+            }
+        });
+    } else if (msg.action === 'cancelAlarmFromPopup') {
+        chrome.alarms.clear(msg.alarmName);
+        chrome.storage.local.remove(msg.alarmName, () => {
+            chrome.tabs.query({ url: 'https://oasis.ssu.ac.kr/*' }, tabs => {
+                tabs.forEach(tab =>
+                    chrome.tabs.sendMessage(tab.id, {
+                        action: 'alarmCancelledFromPopup',
+                        seatCode: msg.seatCode,
+                    })
+                );
+            });
+            sendResponse();
+        });
+        return true; // 비동기 응답
     }
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
+    if (alarm.name === 'oasis-my-seat-warning') {
+        chrome.storage.local.get('oasis-my-seat-warning', (data) => {
+            const info = data['oasis-my-seat-warning'];
+            const room = info?.roomName ? `'${info.roomName}' ` : '';
+            const seat = info?.seatCode ? `${info.seatCode}번 자리 ` : '';
+            showNotification(
+                'oasis-my-seat-warning',
+                '⏰ 이용 시간 알림',
+                `${room}${seat}이용시간이 30분 남았어요.`
+            );
+            chrome.storage.local.remove('oasis-my-seat-warning');
+        });
+        return;
+    }
+
     if (!alarm.name.startsWith("oasis-seat-")) return;
 
     chrome.storage.local.get(alarm.name, (data) => {
@@ -70,5 +108,6 @@ function showNotification(id, title, message) {
         title,
         message,
         priority: 2,
+        requireInteraction: true,
     });
 }
