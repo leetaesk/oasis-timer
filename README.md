@@ -37,17 +37,36 @@
 
 ## 파일 구조
 
+확장 프로그램은 빌드 단계 없이 동작합니다. 각 컨텍스트(content / popup / background)는
+manifest 또는 HTML에 명시된 **로드 순서대로** 실행되며 같은 스코프를 공유합니다.
+
 ```
 oasis_timer/
-├── manifest.json      # 확장 프로그램 설정
-├── background.js      # 알람 관리 및 시스템 알림
-├── content.js         # 열람실 페이지 DOM 조작 및 폴링
-├── content.css        # 인라인 표시 스타일
-├── popup.html         # 팝업 UI
-├── popup.js           # 팝업 로직
-├── popup.css          # 팝업 스타일
-└── icons/
-    └── icon48.png
+├── manifest.json              # 확장 프로그램 설정 (로드 순서 정의)
+├── icons/                     # 16 / 48 / 128 아이콘
+├── src/
+│   ├── content/               # 열람실 페이지 DOM 조작 및 폴링
+│   │   ├── constants.js       #   상수 · 열람실명 · 공유 상태(Map)
+│   │   ├── format.js          #   남은시간 / 종료시각 / 긴급도 포맷
+│   │   ├── auth.js            #   roomId 파싱 · pyxis 토큰 추출
+│   │   ├── toast.js           #   인페이지 토스트
+│   │   ├── poll.js            #   내자리 30분전 알림 · 좌석 취소/연장 폴링
+│   │   ├── seat-ui.js         #   알람 토글 · 인라인 주입 · 스캔
+│   │   ├── main.js            #   MutationObserver · 메시지 · 초기화
+│   │   └── content.css        #   인라인 표시 스타일
+│   ├── popup/                 # 확장 아이콘 팝업
+│   │   ├── popup.html         #   팝업 UI
+│   │   ├── popup.css          #   팝업 스타일
+│   │   ├── constants.js       #   열람실명
+│   │   ├── api.js             #   토큰 획득 · pyxis API 호출
+│   │   ├── format.js          #   시각/남은시간 포맷
+│   │   ├── render.js          #   내자리 · 알람목록 렌더 · 취소
+│   │   └── main.js            #   이벤트 바인딩 · 초기 렌더
+│   └── background/            # 서비스 워커
+│       ├── background.js      #   엔트리 (importScripts)
+│       ├── notifications.js   #   시스템 알림
+│       └── handlers.js        #   alarms / messages / notifications 리스너
+└── releases/                  # 릴리스 zip (git 미추적)
 ```
 
 ## 권한

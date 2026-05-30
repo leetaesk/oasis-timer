@@ -9,10 +9,10 @@
         "default_icon": {
             "48": "icons/icon48.png"
         },
-        "default_popup": "popup.html"
+        "default_popup": "src/popup/popup.html"
     },
     "background": {
-        "service_worker": "background.js"
+        "service_worker": "src/background/background.js"
     },
     "icons": {
         "16": "icons/icon16.png",
@@ -24,8 +24,16 @@
             "matches": [
                 "https://oasis.ssu.ac.kr/library-services/smuf/reading-rooms*"
             ],
-            "js": ["content.js"],
-            "css": ["content.css"],
+            "js": [
+                "src/content/constants.js",
+                "src/content/format.js",
+                "src/content/auth.js",
+                "src/content/toast.js",
+                "src/content/poll.js",
+                "src/content/seat-ui.js",
+                "src/content/main.js"
+            ],
+            "css": ["src/content/content.css"],
             "run_at": "document_idle"
         }
     ]

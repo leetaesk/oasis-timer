@@ -1,3 +1,5 @@
+// ── 이벤트 리스너 ─────────────────────────────────────
+
 chrome.runtime.onInstalled.addListener(() => {
     console.log("Oasis Timer installed");
 });
@@ -101,14 +103,3 @@ chrome.notifications.onClicked.addListener((notificationId) => {
         }
     });
 });
-
-function showNotification(id, title, message) {
-    chrome.notifications.create(id, {
-        type: "basic",
-        iconUrl: "icons/icon48.png",
-        title,
-        message,
-        priority: 2,
-        requireInteraction: true,
-    });
-}
