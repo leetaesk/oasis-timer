@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# 릴리스 / 빌드 산출물 (소스에서 재생성 가능, 배포는 웹스토어/GitHub Releases로)
+releases/
+dist/
+*.zip
+
+# 테스트 아티팩트 (Playwright 등)
+test-profile/
+web-ext-artifacts/
+
+# OS
+.DS_Store
+Thumbs.db
