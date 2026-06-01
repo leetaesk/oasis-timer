@@ -34,42 +34,34 @@ async function renderMySeat(token) {
   `;
 }
 
-// ── 알람 목록 렌더 ────────────────────────────────────
+// ── 자동예약 대기 목록 렌더 ───────────────────────────
 
-async function renderAlarms() {
-    const el = document.getElementById("alarms-content");
+async function renderAutoReserves() {
+    const el = document.getElementById("autoreserve-content");
 
-    const [storageData, activeAlarms] = await Promise.all([
-        new Promise((resolve) => chrome.storage.local.get(null, resolve)),
-        new Promise((resolve) => chrome.alarms.getAll(resolve)),
-    ]);
+    const storageData = await new Promise((resolve) =>
+        chrome.storage.local.get(null, resolve),
+    );
 
-    const activeNames = new Set(activeAlarms.map((a) => a.name));
-
-    const entries = Object.entries(storageData)
-        .filter(
-            ([key, val]) =>
-                key.startsWith("oasis-seat-") &&
-                activeNames.has(key) &&
-                val?.seatCode,
-        )
-        .sort((a, b) => (a[1].endTimestamp || 0) - (b[1].endTimestamp || 0));
+    const entries = Object.entries(storageData).filter(
+        ([key, val]) => key.startsWith("oasis-autoreserve-") && val?.seatCode,
+    );
 
     if (entries.length === 0) {
-        el.innerHTML = '<div class="empty">설정된 알람이 없어요.</div>';
+        el.innerHTML = '<div class="empty">대기 중인 자동예약이 없어요.</div>';
         return;
     }
 
     const html = entries
         .map(
-            ([alarmName, info]) => `
+            ([, info]) => `
     <div class="alarm-item">
       <div class="alarm-info">
         <div class="alarm-room">${info.roomName || getRoomName(info.roomId)}</div>
         <div class="alarm-seat">${info.seatCode}번 자리</div>
-        <div class="alarm-time">종료 ${formatEndTimeFromTs(info.endTimestamp)}</div>
+        <div class="alarm-time">풀리면 자동 예약</div>
       </div>
-      <button class="cancel-btn" data-alarm="${alarmName}" data-seat="${info.seatCode}" data-room="${info.roomId}">취소</button>
+      <button class="cancel-btn" data-seat="${info.seatCode}" data-room="${info.roomId}">취소</button>
     </div>
   `,
         )
@@ -81,18 +73,18 @@ async function renderAlarms() {
         btn.addEventListener("click", async () => {
             btn.disabled = true;
             btn.textContent = "…";
-            await cancelAlarm(btn.dataset.alarm, btn.dataset.seat, btn.dataset.room);
-            await renderAlarms();
+            await disarmAutoReserve(btn.dataset.seat, btn.dataset.room);
+            await renderAutoReserves();
         });
     });
 }
 
-// ── 알람 취소 ─────────────────────────────────────────
+// ── 자동예약 취소 ─────────────────────────────────────
 
-function cancelAlarm(alarmName, seatCode, roomId) {
+function disarmAutoReserve(seatCode, roomId) {
     return new Promise((resolve) => {
         chrome.runtime.sendMessage(
-            { action: "cancelAlarmFromPopup", alarmName, seatCode, roomId },
+            { action: "disarmAutoReserve", roomId, seatCode },
             resolve,
         );
     });

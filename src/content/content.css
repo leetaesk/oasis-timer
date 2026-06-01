@@ -174,9 +174,9 @@ button.oasis-state-expired {
     }
 }
 
-/* ---- 알람 버튼 ---- */
+/* ---- 자동예약 버튼 ---- */
 
-.oasis-alarm-btn {
+.oasis-reserve-btn {
     position: absolute !important;
     top: 2px !important;
     right: 2px !important;
@@ -199,18 +199,18 @@ button.oasis-state-expired {
         background 0.15s !important;
 }
 
-.oasis-alarm-btn:hover {
+.oasis-reserve-btn:hover {
     color: #1565c0 !important;
     background: rgba(21, 101, 192, 0.12) !important;
 }
 
-.oasis-alarm-btn.oasis-alarm-armed {
-    color: #f57c00 !important;
+.oasis-reserve-btn.oasis-reserve-armed {
+    color: #2e7d32 !important;
 }
 
-.oasis-alarm-btn.oasis-alarm-armed:hover {
-    color: #e65100 !important;
-    background: rgba(245, 124, 0, 0.12) !important;
+.oasis-reserve-btn.oasis-reserve-armed:hover {
+    color: #1b5e20 !important;
+    background: rgba(46, 125, 50, 0.12) !important;
 }
 
 /* ---- 토스트 ---- */

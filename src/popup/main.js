@@ -13,9 +13,9 @@ document.getElementById("open-reservations").addEventListener("click", () => {
     if (!token) {
         document.getElementById("my-seat-content").innerHTML =
             '<div class="error">로그인이 필요해요.</div>';
-        document.getElementById("alarms-content").innerHTML =
+        document.getElementById("autoreserve-content").innerHTML =
             '<div class="error">로그인이 필요해요.</div>';
         return;
     }
-    await Promise.all([renderMySeat(token), renderAlarms()]);
+    await Promise.all([renderMySeat(token), renderAutoReserves()]);
 })();

@@ -33,90 +33,18 @@ async function setupMySeatWarning() {
   });
 }
 
-// ── 폴링: 알람 설정 좌석의 취소/연장 감지 ─────────────
+// ── 자동예약 폴링 (탭 열림 시) ────────────────────────
+// 실제 예약 판단/실행은 service worker(reserve.js)가 담당.
+// content script 는 자동예약 대상이 있을 때 SW 에 시도를 ping 한다.
 
-async function pollSeats() {
-    if (seatAlarmState.size === 0) return;
-
-    const token = getPyxisToken();
-    if (!token) return;
-
-    // roomId별로 알람 그룹화
-    const roomGroups = new Map(); // roomId -> [{ stateKey, seatCode, alarmInfo }]
-    for (const [stateKey, alarmInfo] of seatAlarmState.entries()) {
-        const roomId = alarmInfo.roomId;
-        if (!roomGroups.has(roomId)) roomGroups.set(roomId, []);
-        roomGroups.get(roomId).push({ stateKey, seatCode: alarmInfo.seatCode, alarmInfo });
-    }
-
-    for (const [roomId, alarms] of roomGroups.entries()) {
-        let seats;
-        try {
-            const res = await fetch(`/pyxis-api/1/api/rooms/${roomId}/seats`, {
-                credentials: "include",
-                cache: "no-store",
-                headers: {
-                    Accept: "application/json",
-                    "Accept-Language": "ko",
-                    "Pyxis-Auth-Token": token,
-                },
-            });
-            const data = await res.json();
-            if (!data.success) continue;
-            seats = data.data?.list || [];
-        } catch (_) {
-            continue;
-        }
-
-        if (!seats.length) continue;
-
-        for (const { stateKey, seatCode, alarmInfo } of alarms) {
-            const seat = seats.find((s) => s.code === seatCode);
-            const { roomName } = alarmInfo;
-
-            if (!seat || !seat.isOccupied) {
-                // 조기 취소 (1, 2, 3번 케이스)
-                chrome.runtime.sendMessage({
-                    action: "clearSeatAlarm",
-                    alarmName: alarmInfo.alarmName,
-                });
-                chrome.runtime.sendMessage({
-                    action: "seatCancelledNotify",
-                    seatCode,
-                    roomName,
-                });
-                seatAlarmState.delete(stateKey);
-                resetAlarmButton(seatCode);
-                showToast(
-                    `알람을 설정하신 '${roomName}' ${seatCode} 번 자리가 취소되었어요.`,
-                );
-            } else {
-                // 연장 감지: 새 예상 종료시각이 기존보다 1시간 이상 늦을 때 (4번 케이스)
-                const newEndTimestamp = Date.now() + seat.remainingTime * 60 * 1000;
-                if (newEndTimestamp > alarmInfo.endTimestamp + 60 * 60 * 1000) {
-                    chrome.runtime.sendMessage({
-                        action: "clearSeatAlarm",
-                        alarmName: alarmInfo.alarmName,
-                    });
-                    chrome.runtime.sendMessage({
-                        action: "seatExtendedNotify",
-                        seatCode,
-                        roomName,
-                    });
-                    seatAlarmState.delete(stateKey);
-                    resetAlarmButton(seatCode);
-                    showToast(
-                        `알람을 설정하신 '${roomName}' ${seatCode} 번 자리가 연장되었어요. 알람을 취소할게요.`,
-                    );
-                }
-            }
-        }
-    }
+function pingAutoReserve() {
+    if (seatAutoReserveState.size === 0) return;
+    chrome.runtime.sendMessage({ action: "tryAutoReserve" });
 }
 
 function startPolling() {
     if (pollIntervalId !== null) return;
-    pollIntervalId = setInterval(pollSeats, POLL_INTERVAL_MS);
+    pollIntervalId = setInterval(pingAutoReserve, POLL_INTERVAL_MS);
 }
 
 function stopPolling() {
@@ -125,6 +53,8 @@ function stopPolling() {
     pollIntervalId = null;
 }
 
+// ── 자동예약 버튼 UI 동기화 ───────────────────────────
+
 function findSeatState(seatCode) {
     for (const [, state] of seatTimers.entries()) {
         if (state.originalText === seatCode) return state;
@@ -132,11 +62,18 @@ function findSeatState(seatCode) {
     return null;
 }
 
-function resetAlarmButton(seatCode) {
+function resetReserveButton(seatCode) {
     const state = findSeatState(seatCode);
     if (!state) return;
-    const btn = state.btn.querySelector(".oasis-alarm-btn");
+    const btn = state.btn.querySelector(".oasis-reserve-btn");
     if (!btn) return;
-    btn.classList.remove("oasis-alarm-armed");
-    btn.title = "종료 시 알림 설정";
+    btn.classList.remove("oasis-reserve-armed");
+    btn.title = "이 자리 자동예약";
+}
+
+function resetAllReserveButtons() {
+    document.querySelectorAll(".oasis-reserve-btn.oasis-reserve-armed").forEach((btn) => {
+        btn.classList.remove("oasis-reserve-armed");
+        btn.title = "이 자리 자동예약";
+    });
 }

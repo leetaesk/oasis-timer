@@ -1,50 +1,38 @@
-// ── 알람 토글 ─────────────────────────────────────────
+// ── 자동예약 토글 ─────────────────────────────────────
 
-function toggleAlarm(seatCodeText, endTimestamp, alarmDiv, roomId) {
+function toggleAutoReserve(seatCodeText, reserveDiv, roomId) {
     const stateKey = `${roomId}_${seatCodeText}`;
-    const alarmName = `oasis-seat-${roomId}-${seatCodeText}`;
     const roomName = getRoomName(roomId);
 
-    if (seatAlarmState.has(stateKey)) {
-        // 알람 취소
-        chrome.runtime.sendMessage({ action: "clearSeatAlarm", alarmName });
-        seatAlarmState.delete(stateKey);
-        alarmDiv.classList.remove("oasis-alarm-armed");
-        alarmDiv.title = "종료 시 알림 설정";
-        showToast(
-            `'${roomName}' ${seatCodeText} 번 자리 알림이 취소되었습니다.`,
-        );
-    } else {
-        // 알람 설정
+    if (seatAutoReserveState.has(stateKey)) {
+        // 자동예약 해제
         chrome.runtime.sendMessage({
-            action: "setSeatAlarm",
-            alarmName,
-            seatCode: seatCodeText,
+            action: "disarmAutoReserve",
             roomId,
-            roomName,
-            endTimestamp,
-        });
-        seatAlarmState.set(stateKey, {
-            alarmName,
-            endTimestamp,
-            roomId,
-            roomName,
             seatCode: seatCodeText,
         });
-        alarmDiv.classList.add("oasis-alarm-armed");
-        alarmDiv.title = "알림 취소";
-        const endStr = formatEndTime(endTimestamp);
-        showToast(
-            `'${roomName}' ${seatCodeText} 번 자리 — ${endStr} 알림이 설정되었습니다.`,
-        );
+        seatAutoReserveState.delete(stateKey);
+        reserveDiv.classList.remove("oasis-reserve-armed");
+        reserveDiv.title = "이 자리 자동예약";
+        showToast(`'${roomName}' ${seatCodeText}번 자리 자동예약을 해제했어요.`);
+    } else {
+        // 자동예약 설정
+        chrome.runtime.sendMessage({
+            action: "armAutoReserve",
+            roomId,
+            roomName,
+            seatCode: seatCodeText,
+        });
+        seatAutoReserveState.set(stateKey, { roomId, roomName, seatCode: seatCodeText });
+        reserveDiv.classList.add("oasis-reserve-armed");
+        reserveDiv.title = "자동예약 해제";
+        showToast(`'${roomName}' ${seatCodeText}번 자리가 풀리면 자동으로 예약할게요.`);
     }
 }
 
 // ── 인라인 주입 ───────────────────────────────────────
 
 function injectInline(progressBar) {
-    if (seatTimers.has(progressBar)) return;
-
     const valuenow = parseFloat(progressBar.getAttribute("aria-valuenow"));
     if (isNaN(valuenow) || valuenow <= 0) return;
 
@@ -52,11 +40,21 @@ function injectInline(progressBar) {
     const seatCodeEl = btn && btn.querySelector(".ikc-seat-code");
     if (!btn || !seatCodeEl) return;
 
+    // 우리 주입이 DOM에 아직 살아있으면 정상 — 그대로 둔다.
     if (seatCodeEl.querySelector(".oasis-code-num")) return;
 
-    const initialElapsed = Math.round((valuenow / 100) * TOTAL_SECONDS);
+    // 여기 도달 = 미주입 상태. progressBar 가 예전에 등록돼 있다면
+    // Angular/jQuery 재렌더로 주입이 날아간 것 → 옛 타이머를 정리하고 재주입.
+    const prev = seatTimers.get(progressBar);
+    if (prev) {
+        clearInterval(prev.timerId);
+        seatTimers.delete(progressBar);
+    }
+
+    const totalSeconds = getRoomTotalSeconds(getRoomId());
+    const initialElapsed = Math.round((valuenow / 100) * totalSeconds);
     const observedAt = Date.now();
-    const endTimestamp = observedAt + (TOTAL_SECONDS - initialElapsed) * 1000;
+    const endTimestamp = observedAt + (totalSeconds - initialElapsed) * 1000;
 
     const originalText = seatCodeEl.textContent.trim();
 
@@ -69,28 +67,28 @@ function injectInline(progressBar) {
     const remainingSpan = seatCodeEl.querySelector(".oasis-inline-remaining");
     btn.classList.add("oasis-occupied");
 
-    // 알람 버튼 추가
-    const alarmDiv = document.createElement("div");
-    alarmDiv.className = "oasis-alarm-btn";
-    alarmDiv.title = "종료 시 알림 설정";
-    alarmDiv.innerHTML = BELL_SVG;
-    // 이미 알람이 설정된 좌석이면 armed 상태 복원
+    // 자동예약 버튼 추가
+    const reserveDiv = document.createElement("div");
+    reserveDiv.className = "oasis-reserve-btn";
+    reserveDiv.title = "이 자리 자동예약";
+    reserveDiv.innerHTML = RESERVE_SVG;
+    // 이미 자동예약이 설정된 좌석이면 armed 상태 복원
     const currentRoomId = getRoomId();
-    if (seatAlarmState.has(`${currentRoomId}_${originalText}`)) {
-        alarmDiv.classList.add("oasis-alarm-armed");
-        alarmDiv.title = "알림 취소";
+    if (seatAutoReserveState.has(`${currentRoomId}_${originalText}`)) {
+        reserveDiv.classList.add("oasis-reserve-armed");
+        reserveDiv.title = "자동예약 해제";
     }
-    alarmDiv.addEventListener("click", (e) => {
+    reserveDiv.addEventListener("click", (e) => {
         e.stopPropagation();
         e.preventDefault();
-        toggleAlarm(originalText, endTimestamp, alarmDiv, getRoomId());
+        toggleAutoReserve(originalText, reserveDiv, getRoomId());
     });
-    btn.appendChild(alarmDiv);
+    btn.appendChild(reserveDiv);
 
     function tick() {
         const elapsed =
             initialElapsed + Math.floor((Date.now() - observedAt) / 1000);
-        const remaining = TOTAL_SECONDS - elapsed;
+        const remaining = totalSeconds - elapsed;
 
         remainingSpan.textContent = formatRemaining(remaining);
 
@@ -114,7 +112,7 @@ function removeInline(progressBar) {
     clearInterval(state.timerId);
     state.seatCodeEl.textContent = state.originalText;
     state.btn.classList.remove("oasis-occupied", ...STATE_CLASSES);
-    state.btn.querySelector(".oasis-alarm-btn")?.remove();
+    state.btn.querySelector(".oasis-reserve-btn")?.remove();
     seatTimers.delete(progressBar);
 }
 
