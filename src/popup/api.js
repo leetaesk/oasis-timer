@@ -1,21 +1,22 @@
+/**
+ * Oasis Timer Popup
+ * 확장 아이콘 팝업 — 내 자리 현황과 자동예약 대기 목록을 표시합니다.
+ *
+ * ── 모듈 구성 (popup.html 의 <script> 순서대로 로드, 스코프 공유) ──
+ *   shared/rooms.js → shared/token.js
+ *   → api.js → format.js → render.js → main.js
+ *
+ * 열람실 메타(getRoomName)는 shared/rooms.js, 토큰 파서(parsePyxisToken)는
+ * shared/token.js 에 정의되어 있다.
+ */
+
 // ── 인증 ──────────────────────────────────────────────
 
 function getPyxisToken() {
     return new Promise((resolve) => {
         chrome.cookies.get(
             { url: "https://oasis.ssu.ac.kr", name: "LOPE_PYXIS3_SSU" },
-            (cookie) => {
-                if (!cookie) {
-                    resolve(null);
-                    return;
-                }
-                try {
-                    const obj = JSON.parse(decodeURIComponent(cookie.value));
-                    resolve(obj.accessToken || null);
-                } catch {
-                    resolve(null);
-                }
-            },
+            (cookie) => resolve(parsePyxisToken(cookie?.value)), // shared/token.js
         );
     });
 }

@@ -40,31 +40,35 @@
 
 확장 프로그램은 빌드 단계 없이 동작합니다. 각 컨텍스트(content / popup / background)는
 manifest 또는 HTML에 명시된 **로드 순서대로** 실행되며 같은 스코프를 공유합니다.
+컨텍스트가 격리돼 있어 번들러 없이는 `import` 가 불가하므로, 공통 코드는
+`src/shared/` 에 두고 각 컨텍스트가 자신의 로드 목록 맨 앞에서 함께 불러옵니다.
 
 ```
 oasis_timer/
 ├── manifest.json              # 확장 프로그램 설정 (로드 순서 정의)
 ├── icons/                     # 16 / 48 / 128 아이콘
 ├── src/
+│   ├── shared/                # 컨텍스트 공통 (각 컨텍스트에서 가장 먼저 로드)
+│   │   ├── rooms.js           #   열람실명 · 이용시간 (TOTAL_SECONDS, ROOM_*, getRoom*)
+│   │   └── token.js           #   pyxis 토큰 파서 (parsePyxisToken)
 │   ├── content/               # 열람실 페이지 DOM 조작 및 폴링
-│   │   ├── constants.js       #   상수 · 열람실명 · 공유 상태(Map) · 예약 아이콘
+│   │   ├── constants.js       #   content 전용 상태(Map) · 폴링 주기 · 예약 아이콘
 │   │   ├── format.js          #   남은시간 / 종료시각 / 긴급도 포맷
-│   │   ├── auth.js            #   roomId 파싱 · pyxis 토큰 추출
+│   │   ├── auth.js            #   roomId 파싱 · document.cookie 토큰 추출
 │   │   ├── toast.js           #   인페이지 토스트
 │   │   ├── poll.js            #   내자리 30분전 알림 · 자동예약 ping 폴링
 │   │   ├── seat-ui.js         #   자동예약 토글 · 인라인 주입 · 스캔
-│   │   ├── main.js            #   MutationObserver · 메시지 · 초기화
+│   │   ├── main.js            #   MutationObserver(rAF 디바운스) · 메시지 · 초기화
 │   │   └── content.css        #   인라인 표시 스타일
 │   ├── popup/                 # 확장 아이콘 팝업
 │   │   ├── popup.html         #   팝업 UI
 │   │   ├── popup.css          #   팝업 스타일
-│   │   ├── constants.js       #   열람실명
-│   │   ├── api.js             #   토큰 획득 · pyxis API 호출
+│   │   ├── api.js             #   chrome.cookies 토큰 · pyxis API 호출
 │   │   ├── format.js          #   시각/남은시간 포맷
 │   │   ├── render.js          #   내자리 · 자동예약 대기목록 렌더 · 취소
 │   │   └── main.js            #   이벤트 바인딩 · 초기 렌더
 │   └── background/            # 서비스 워커
-│       ├── background.js      #   엔트리 (importScripts)
+│       ├── background.js      #   엔트리 (importScripts: ../shared/token → ...)
 │       ├── notifications.js   #   시스템 알림
 │       ├── reserve.js         #   자동예약 엔진 (감시 · 예약 POST · 중복방지 락)
 │       └── handlers.js        #   alarms / messages / notifications 리스너

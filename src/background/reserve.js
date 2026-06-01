@@ -21,14 +21,7 @@ function getReserveToken() {
     return new Promise((resolve) => {
         chrome.cookies.get(
             { url: BASE, name: "LOPE_PYXIS3_SSU" },
-            (cookie) => {
-                if (!cookie) return resolve(null);
-                try {
-                    resolve(JSON.parse(decodeURIComponent(cookie.value)).accessToken || null);
-                } catch {
-                    resolve(null);
-                }
-            },
+            (cookie) => resolve(parsePyxisToken(cookie?.value)), // shared/token.js
         );
     });
 }

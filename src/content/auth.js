@@ -9,11 +9,6 @@ function getPyxisToken() {
         .split(";")
         .find((c) => c.trim().startsWith("LOPE_PYXIS3_SSU="));
     if (!match) return null;
-    try {
-        const raw = match.trim().slice("LOPE_PYXIS3_SSU=".length);
-        const obj = JSON.parse(decodeURIComponent(raw));
-        return obj.accessToken || null;
-    } catch (_) {
-        return null;
-    }
+    const raw = match.trim().slice("LOPE_PYXIS3_SSU=".length);
+    return parsePyxisToken(raw); // shared/token.js
 }

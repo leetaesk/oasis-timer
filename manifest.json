@@ -25,6 +25,8 @@
                 "https://oasis.ssu.ac.kr/library-services/smuf/reading-rooms*"
             ],
             "js": [
+                "src/shared/rooms.js",
+                "src/shared/token.js",
                 "src/content/constants.js",
                 "src/content/format.js",
                 "src/content/auth.js",
