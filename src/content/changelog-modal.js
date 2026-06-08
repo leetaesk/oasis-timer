@@ -1,7 +1,6 @@
 // ── 업데이트 공지 모달 (풀스크린 오버레이) ────────────
-// background 가 남긴 pendingChangelog({from, to}) 플래그를 확인해,
-// (from, to] 범위의 모든 버전 공지를 페이지 전체를 덮는 모달로 띄운다.
-// 닫으면 플래그를 지워 다시 뜨지 않게 한다.
+// '마지막으로 본 버전'과 현재 버전을 비교해, 그 사이의 공지를
+// 페이지 전체를 덮는 모달로 띄운다. 닫으면 본 버전을 갱신해 다시 뜨지 않게 한다.
 
 function showChangelogModal(from, to) {
     const entries = getChangelogSince(from, to); // shared/changelog.js
@@ -35,7 +34,8 @@ function showChangelogModal(from, to) {
 
     function close() {
         overlay.classList.remove("oasis-cl-visible");
-        chrome.storage.local.remove(CHANGELOG_STORAGE_KEY); // shared/changelog.js
+        // 닫으면 현재 버전을 '본 버전'으로 기록 → 다시 뜨지 않음
+        chrome.storage.local.set({ [LAST_SEEN_VERSION_KEY]: to }); // shared/changelog.js
         setTimeout(() => overlay.remove(), 200);
     }
 
@@ -57,15 +57,23 @@ function showChangelogModal(from, to) {
     });
 }
 
+// content 로드 시마다 '마지막으로 본 버전' vs 현재 버전을 비교한다.
+// onInstalled 이벤트에 의존하지 않으므로(로컬 설치/이벤트 누락에도) 견고하다.
+//   - 저장값 없음 = 공지 도입 이전부터 쓰던 사용자(또는 신규 설치)
+//     → 0.0.0 으로 간주해 현재까지의 공지를 한 번은 반드시 보여준다.
+//   - 저장값 < 현재 = 업데이트됨 → 그 사이 공지를 모달로 표시
 function checkPendingChangelog() {
-    chrome.storage.local.get(CHANGELOG_STORAGE_KEY, (data) => {
-        const pending = data[CHANGELOG_STORAGE_KEY];
-        if (!pending) return;
-        // 신규 포맷 {from, to}. (구버전 호환: 문자열이면 그 버전 하나만)
-        if (typeof pending === "string") {
-            showChangelogModal(pending, pending);
-        } else if (pending.to) {
-            showChangelogModal(pending.from || null, pending.to);
+    const current = chrome.runtime.getManifest().version;
+    chrome.storage.local.get(LAST_SEEN_VERSION_KEY, (data) => {
+        const lastSeen = data[LAST_SEEN_VERSION_KEY] || "0.0.0";
+
+        if (compareVersions(lastSeen, current) >= 0) return; // 이미 최신까지 봄
+
+        // (lastSeen, current] 공지가 있으면 모달, 없으면 조용히 버전만 갱신
+        if (getChangelogSince(lastSeen, current).length > 0) {
+            showChangelogModal(lastSeen, current);
+        } else {
+            chrome.storage.local.set({ [LAST_SEEN_VERSION_KEY]: current });
         }
     });
 }

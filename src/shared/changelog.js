@@ -2,31 +2,22 @@
  * Oasis Timer — 업데이트 공지(changelog) 데이터 (공유)
  *
  * 새 버전 릴리스 시 CHANGELOG 맨 위에 항목을 추가한다.
- * background 가 확장 업데이트를 감지하면 storage 에 pendingChangelog 플래그를
- * 남기고, content script 가 oasis 페이지에서 풀스크린 모달로 보여준다.
+ * content script 가 로드될 때마다 storage 의 '마지막으로 본 버전'과 현재
+ * manifest 버전을 비교해, 그 사이에 공지가 있으면 풀스크린 모달로 보여준다.
+ * (onInstalled 이벤트에 의존하지 않아 로컬 설치/이벤트 누락에도 견고)
  */
 
-const CHANGELOG_STORAGE_KEY = "pendingChangelog";
+const LAST_SEEN_VERSION_KEY = "oasis-last-seen-version";
 
 // 버전 → { title, items[] }. 최신이 위로.
 const CHANGELOG = {
     "2.1.0": {
-        title: "자동연장 추가",
+        title: "Oasis Timer 주요 기능",
         items: [
-            "팝업에서 자동연장을 켜면 연장 가능 시점에 좌석을 자동 연장함.",
-        ],
-    },
-    "2.0.1": {
-        title: "알림 오류 수정",
-        items: [
-            "자동예약 완료·이용 종료 30분 전 알림이 표시되지 않던 문제 수정.",
-        ],
-    },
-    "2.0.0": {
-        title: "자동예약 추가",
-        items: [
-            "좌석에 자동예약 설정 시 자리가 비는 즉시 예약함.",
-            "좌석 정보 표시 안정성 개선.",
+            "좌석 남은 시간·종료 시각을 열람실 화면에 바로 표시.",
+            "자동예약: 좌석에 설정해두면 자리가 비는 즉시 예약함.",
+            "자동연장: 팝업에서 켜면 연장 가능 시점에 좌석을 자동 연장함.",
+            "이용 종료 30분 전 알림.",
         ],
     },
 };
@@ -42,11 +33,6 @@ function compareVersions(a, b) {
         if (x !== y) return x < y ? -1 : 1;
     }
     return 0;
-}
-
-// 특정 버전의 공지 항목 반환 (없으면 null)
-function getChangelogFor(version) {
-    return CHANGELOG[version] || null;
 }
 
 // (from, to] 범위에 해당하는 공지들을 최신순으로 반환.

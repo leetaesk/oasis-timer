@@ -2,19 +2,7 @@
 // (POLL_ALARM, RESERVE_PREFIX, tryReserveAll, getReserveTargets,
 //  syncPollAlarm 은 reserve.js 에서 정의됨)
 
-chrome.runtime.onInstalled.addListener((details) => {
-    // 확장이 새 버전으로 업데이트되면, 이전 버전 이후 ~ 현재 버전까지의
-    // 모든 공지를 누적해 보여주기 위해 (from, to] 범위를 저장한다.
-    // 예: 1.0.2 → 2.0.2 업데이트 시 2.0.0/2.0.1/2.0.2 공지를 모두 표시.
-    // content script 가 oasis 페이지에서 풀스크린 모달로 보여주고 닫으면 지운다.
-    if (details.reason === "update") {
-        const to = chrome.runtime.getManifest().version;
-        const from = details.previousVersion || null;
-        if (getChangelogSince(from, to).length > 0) {
-            chrome.storage.local.set({ [CHANGELOG_STORAGE_KEY]: { from, to } });
-        }
-    }
-});
+// 업데이트 공지는 content script 가 버전 비교로 처리한다(changelog-modal.js).
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.action === "armAutoReserve") {
