@@ -117,21 +117,11 @@ async function tryReserveAll() {
 
     reserving = true;
     try {
-        console.log("[oasis-reserve] tryReserveAll 시작, 대상:", targets);
-
         const token = await getReserveToken();
-        if (!token) {
-            console.log("[oasis-reserve] ❌ 토큰 없음 (로그인 필요)");
-            return;
-        }
+        if (!token) return;
 
         // 이미 내 자리가 있으면 예약하지 않음 (자리 1개 제한)
-        const active = await hasActiveCharge(token);
-        console.log("[oasis-reserve] 내 자리 보유 여부:", active);
-        if (active) {
-            console.log("[oasis-reserve] ⏸ 이미 내 자리 있음 → 예약 보류");
-            return;
-        }
+        if (await hasActiveCharge(token)) return;
 
         // roomId 별로 그룹화
         const byRoom = new Map();
@@ -145,34 +135,17 @@ async function tryReserveAll() {
             let seats;
             try {
                 const d = await apiGet(`/pyxis-api/1/api/rooms/${roomId}/seats`, token);
-                if (!d.success) {
-                    console.log(`[oasis-reserve] ❌ room ${roomId} seats 응답 success:false`, d);
-                    continue;
-                }
+                if (!d.success) continue;
                 seats = d.data?.list || [];
-            } catch (e) {
-                console.log(`[oasis-reserve] ❌ room ${roomId} seats 조회 오류`, e);
+            } catch {
                 continue;
             }
 
-            console.log(`[oasis-reserve] room ${roomId}: seats ${seats.length}개 조회됨`);
-
             for (const t of list) {
                 const seat = seats.find((s) => String(s.code) === String(t.seatCode));
-                if (!seat) {
-                    console.log(
-                        `[oasis-reserve] ⚠️ 좌석 code="${t.seatCode}" 매칭 실패.`,
-                        "응답의 code 샘플:", seats.slice(0, 5).map((s) => s.code),
-                    );
-                    continue;
-                }
-                console.log(
-                    `[oasis-reserve] 좌석 "${t.seatCode}" 찾음 → isOccupied=${seat.isOccupied}, id=${seat.id}`,
-                );
-                if (seat.isOccupied) continue; // 아직 점유 중 → 다음 기회
+                if (!seat || seat.isOccupied) continue; // 없거나 아직 점유 중 → 다음 기회
 
                 // 빈자리 발견 → 예약 시도
-                console.log(`[oasis-reserve] 🟢 빈자리! 예약 시도 seatId=${seat.id}`);
                 let r;
                 try {
                     r = await apiPost(
@@ -180,18 +153,15 @@ async function tryReserveAll() {
                         { seatId: seat.id, smufMethodCode: "PC" },
                         token,
                     );
-                } catch (e) {
-                    console.log("[oasis-reserve] ❌ 예약 POST 오류", e);
+                } catch {
                     continue; // 네트워크 오류 → 다음 폴링에서 재시도
                 }
 
-                console.log("[oasis-reserve] 예약 응답:", r);
                 if (r && r.success) {
-                    console.log("[oasis-reserve] ✅ 예약 성공!");
                     await onReserveSuccess(r.data, t);
                     return; // 자리 1개 확보 → 종료
                 }
-                console.log("[oasis-reserve] ⚠️ 예약 실패(success:false) → 계속 감시", r?.code, r?.message);
+                // 실패(누가 먼저 잡음 등) → 계속 감시
             }
         }
     } finally {
