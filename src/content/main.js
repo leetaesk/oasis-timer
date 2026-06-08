@@ -54,3 +54,6 @@ chrome.storage.local.get(null, (items) => {
 
 setTimeout(setupMySeatWarning, 2000);
 startPolling();
+
+// 업데이트 직후라면 공지 모달 표시
+checkPendingChangelog();

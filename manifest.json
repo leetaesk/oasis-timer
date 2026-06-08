@@ -27,12 +27,14 @@
             "js": [
                 "src/shared/rooms.js",
                 "src/shared/token.js",
+                "src/shared/changelog.js",
                 "src/content/constants.js",
                 "src/content/format.js",
                 "src/content/auth.js",
                 "src/content/toast.js",
                 "src/content/poll.js",
                 "src/content/seat-ui.js",
+                "src/content/changelog-modal.js",
                 "src/content/main.js"
             ],
             "css": ["src/content/content.css"],
