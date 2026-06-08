@@ -29,7 +29,7 @@ function showChangelogModal(from, to) {
                 <span id="oasis-cl-heading" class="oasis-cl-heading">Oasis Timer 업데이트</span>
             </div>
             <div class="oasis-cl-body">${sectionsHtml}</div>
-            <button type="button" class="oasis-cl-close">확인했어요</button>
+            <button type="button" class="oasis-cl-close">확인</button>
         </div>
     `;
 

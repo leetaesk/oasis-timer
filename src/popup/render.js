@@ -10,7 +10,7 @@ async function renderMySeat(token) {
         return;
     }
     if (data.code === "success.noRecord" || !data.list || data.list.length === 0) {
-        el.innerHTML = '<div class="empty">현재 이용 중인 자리가 없어요.</div>';
+        el.innerHTML = '<div class="empty">이용 중인 좌석 없음.</div>';
         return;
     }
 
@@ -63,7 +63,7 @@ async function renderAutoReserves() {
     );
 
     if (entries.length === 0) {
-        el.innerHTML = '<div class="empty">대기 중인 자동예약이 없어요.</div>';
+        el.innerHTML = '<div class="empty">대기 중인 자동예약 없음.</div>';
         return;
     }
 

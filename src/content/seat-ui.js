@@ -14,7 +14,7 @@ function toggleAutoReserve(seatCodeText, reserveDiv, roomId) {
         seatAutoReserveState.delete(stateKey);
         reserveDiv.classList.remove("oasis-reserve-armed");
         reserveDiv.title = "이 자리 자동예약";
-        showToast(`'${roomName}' ${seatCodeText}번 자리 자동예약을 해제했어요.`);
+        showToast(`${roomName} ${seatCodeText}번 좌석 자동예약 해제.`);
     } else {
         // 자동예약 설정
         chrome.runtime.sendMessage({
@@ -26,7 +26,7 @@ function toggleAutoReserve(seatCodeText, reserveDiv, roomId) {
         seatAutoReserveState.set(stateKey, { roomId, roomName, seatCode: seatCodeText });
         reserveDiv.classList.add("oasis-reserve-armed");
         reserveDiv.title = "자동예약 해제";
-        showToast(`'${roomName}' ${seatCodeText}번 자리가 풀리면 자동으로 예약할게요.`);
+        showToast(`${roomName} ${seatCodeText}번 좌석 자동예약 설정. 자리가 비면 예약함.`);
     }
 }
 

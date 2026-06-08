@@ -176,12 +176,12 @@ async function onReserveSuccess(data, target) {
     const roomName = data?.room?.name || target.roomName || "";
     const seatCode = data?.seat?.code || target.seatCode || "";
     const endTime = data?.endTime; // "2026-06-01 13:14:00"
-    const endStr = endTime ? ` (종료 ${endTime.slice(11, 16)})` : "";
+    const endStr = endTime ? ` 종료 ${endTime.slice(11, 16)}.` : "";
 
     showNotification(
         `oasis-reserved-${seatCode}`,
-        "✅ 자동예약 완료",
-        `'${roomName}' ${seatCode}번 자리를 예약했어요!${endStr}`,
+        "자동예약 완료",
+        `${roomName} ${seatCode}번 좌석 예약됨.${endStr}`,
     );
 
     // 내 자리 종료 30분 전 알림 자동 설정

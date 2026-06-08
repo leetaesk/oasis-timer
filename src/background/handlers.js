@@ -82,8 +82,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
             const seat = info?.seatCode ? `${info.seatCode}번 자리 ` : "";
             showNotification(
                 "oasis-my-seat-warning",
-                "⏰ 이용 시간 알림",
-                `${room}${seat}이용시간이 30분 남았어요.`,
+                "이용 시간 알림",
+                `${room}${seat}이용 종료 30분 전.`,
             );
             chrome.storage.local.remove("oasis-my-seat-warning");
         });

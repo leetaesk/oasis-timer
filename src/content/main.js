@@ -26,13 +26,13 @@ chrome.runtime.onMessage.addListener((msg) => {
         // 예약 성공 → 모든 대상 해제 (자리 1개 확보 완료)
         seatAutoReserveState.clear();
         resetAllReserveButtons();
-        showToast(`자동예약 완료! '${msg.roomName || ""}' ${msg.seatCode || ""}번 자리를 잡았어요.`);
+        showToast(`자동예약 완료. ${msg.roomName || ""} ${msg.seatCode || ""}번 좌석 확보됨.`);
     } else if (msg.action === "autoReserveDisarmed") {
         const stateKey = `${msg.roomId}_${msg.seatCode}`;
         seatAutoReserveState.delete(stateKey);
         resetReserveButton(msg.seatCode);
     } else if (msg.action === "autoRenewRenewed") {
-        showToast(`${msg.roomName || ""} ${msg.seatCode || ""}번 좌석 자동연장 완료.`);
+        showToast(`자동연장 완료. ${msg.roomName || ""} ${msg.seatCode || ""}번 좌석.`);
     }
 });
 
