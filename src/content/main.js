@@ -31,6 +31,8 @@ chrome.runtime.onMessage.addListener((msg) => {
         const stateKey = `${msg.roomId}_${msg.seatCode}`;
         seatAutoReserveState.delete(stateKey);
         resetReserveButton(msg.seatCode);
+    } else if (msg.action === "autoRenewRenewed") {
+        showToast(`${msg.roomName || ""} ${msg.seatCode || ""}번 좌석 자동연장 완료.`);
     }
 });
 

@@ -10,6 +10,12 @@ const CHANGELOG_STORAGE_KEY = "pendingChangelog";
 
 // 버전 → { title, items[] }. 최신이 위로.
 const CHANGELOG = {
+    "2.1.0": {
+        title: "자동연장 추가",
+        items: [
+            "팝업에서 자동연장을 켜면 연장 가능 시점에 좌석을 자동 연장함.",
+        ],
+    },
     "2.0.1": {
         title: "알림 오류 수정",
         items: [

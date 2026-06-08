@@ -39,9 +39,23 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
             syncPollAlarm().finally(() => sendResponse && sendResponse());
         });
         return true; // 비동기 응답
+    } else if (msg.action === "setAutoRenew") {
+        // 자동연장 on/off 토글
+        if (msg.enabled) {
+            chrome.storage.local.set({ [AUTORENEW_KEY]: true }, () => {
+                chrome.alarms.create(POLL_ALARM, { periodInMinutes: 1 });
+                tryRenew();
+            });
+        } else {
+            chrome.storage.local.remove(AUTORENEW_KEY, () => {
+                syncPollAlarm().finally(() => sendResponse && sendResponse());
+            });
+            return true; // 비동기 응답
+        }
     } else if (msg.action === "tryAutoReserve") {
-        // content script(탭)의 주기적 ping
+        // content script(탭)의 주기적 ping → 예약·연장 모두 점검
         tryReserveAll();
+        tryRenew();
     } else if (msg.action === "setMySeatWarning") {
         chrome.alarms.create("oasis-my-seat-warning", { when: msg.warningTimestamp });
         chrome.storage.local.set({
@@ -57,6 +71,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === POLL_ALARM) {
         tryReserveAll();
+        tryRenew();
         return;
     }
 

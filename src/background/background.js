@@ -6,7 +6,8 @@
  *   ../shared/token.js     (parsePyxisToken)
  *   ../shared/changelog.js (CHANGELOG, getChangelogSince)
  *   → notifications.js     (showNotification)
- *   → reserve.js           (자동예약 엔진: tryReserveAll 등)
+ *   → reserve.js           (자동예약 엔진: tryReserveAll, apiGet/apiPost 등)
+ *   → renew.js             (자동연장 엔진: tryRenew 등)
  *   → handlers.js          (chrome.* 리스너)
  */
 
@@ -15,5 +16,6 @@ importScripts(
     "../shared/changelog.js",
     "notifications.js",
     "reserve.js",
+    "renew.js",
     "handlers.js",
 );

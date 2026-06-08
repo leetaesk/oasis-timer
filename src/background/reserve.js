@@ -92,15 +92,15 @@ function broadcast(msg) {
     });
 }
 
-// 자동예약 대상이 있으면 폴링 알람 보장, 없으면 해제
-function syncPollAlarm() {
-    return getReserveTargets().then((targets) => {
-        if (Object.keys(targets).length > 0) {
-            chrome.alarms.create(POLL_ALARM, { periodInMinutes: 1 });
-        } else {
-            chrome.alarms.clear(POLL_ALARM);
-        }
-    });
+// 자동예약 대상 또는 자동연장이 켜져 있으면 폴링 알람 보장, 둘 다 없으면 해제.
+async function syncPollAlarm() {
+    const targets = await getReserveTargets();
+    const renewOn = await isAutoRenewOn(); // renew.js
+    if (Object.keys(targets).length > 0 || renewOn) {
+        chrome.alarms.create(POLL_ALARM, { periodInMinutes: 1 });
+    } else {
+        chrome.alarms.clear(POLL_ALARM);
+    }
 }
 
 // ── 예약 코어 ─────────────────────────────────────────
@@ -110,10 +110,7 @@ async function tryReserveAll() {
 
     const targets = await getReserveTargets();
     const keys = Object.keys(targets);
-    if (keys.length === 0) {
-        chrome.alarms.clear(POLL_ALARM);
-        return;
-    }
+    if (keys.length === 0) return; // 폴링 알람 정리는 syncPollAlarm 이 담당
 
     reserving = true;
     try {

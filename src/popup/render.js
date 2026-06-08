@@ -19,6 +19,10 @@ async function renderMySeat(token) {
     const badgeClass = isTemp ? "state-badge temp" : "state-badge";
     const badgeText = isTemp ? "외출중" : "이용중";
 
+    const renewOn = await new Promise((resolve) =>
+        chrome.storage.local.get("oasis-autorenew", (d) => resolve(!!d["oasis-autorenew"])),
+    );
+
     el.innerHTML = `
     <div class="my-seat-card">
       <div class="my-seat-room">${c.room.name}</div>
@@ -30,8 +34,19 @@ async function renderMySeat(token) {
         <span class="remaining">${formatRemaining(c.remainingTime)}</span>
         &nbsp;·&nbsp;종료 ${formatEndTimeFromStr(c.endTime)}
       </div>
+      <label class="autorenew-row">
+        <span class="autorenew-label">자동연장</span>
+        <span class="switch">
+          <input type="checkbox" id="autorenew-toggle" ${renewOn ? "checked" : ""}>
+          <span class="slider"></span>
+        </span>
+      </label>
     </div>
   `;
+
+    document.getElementById("autorenew-toggle").addEventListener("change", (e) => {
+        chrome.runtime.sendMessage({ action: "setAutoRenew", enabled: e.target.checked });
+    });
 }
 
 // ── 자동예약 대기 목록 렌더 ───────────────────────────
